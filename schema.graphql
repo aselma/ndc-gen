@@ -1,25 +1,214 @@
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
-}
 
-type User {
-  id: ID!
-  name: String!
+schema{
+  query: Query
 }
 
 type Query {
-  todos: [Todo!]!
+  flightX: FlightXQuery
 }
 
-input NewTodo {
-  text: String!
-  userId: String!
+type FlightXQuery {
+  search(request:AirShoppingRQBasic): AirShoppingRS
+  quote(offerID:ID): Boolean
+  book(offerID:ID): Boolean
+	retrieve(orderID:ID): Boolean
+  cancel(orderID:ID): Boolean
+  issue(orderID:ID): Boolean
 }
 
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+input AirShoppingRQBasic{
+  originDestination: [OriginDestination]
+  pax: [iPax]
+  carrier: [AirlineCode]
+  
 }
+
+input iPax {
+  age: Int!
+}
+
+input OriginDestination {
+  originLoc: LocationCode
+  destLoc: LocationCode
+  date: Date
+  
+}
+
+type AirShoppingRS {
+  errors: [Error]
+  response: ResponseX
+}
+
+type Error {
+  code: String!
+  type: String!
+  description: String!
+}
+
+type ResponseX {
+  offersGroup: [CarrierOffers]
+  dataLists: DataLists
+}
+
+type DataLists {
+  paxList: [FlightPax]
+  paxJourneyList: [PaxJourney]
+  paxSegmentList: [PaxSegment]
+}
+type PaxJourney {
+  paxJourneyID:ID!
+  paxSegmentRefID:[ID]
+}
+type PaxSegment {
+  paxSegmentID: ID!
+  MarketingCarrierInfo: DatedMarketingSegmentType
+  arrival: TransportArrivalType
+  dep: TransportDepType
+}
+type TransportArrivalType {
+  IATA_LocationCode: String
+}
+
+scalar DateTime
+scalar Date
+scalar DateType
+
+type AdviseMessage{
+  code: ID!
+  description: String!
+  level: Int!
+  external: ExternalMessage
+  correlationID: ID!
+}
+
+type ExternalMessage{
+  code: String
+  message: String!
+}
+
+type Price{
+  net: Float!
+  gross: Float!
+}
+
+interface Node{
+  code: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type TransportDepType {
+  IATA_LocationCode: String
+  AircraftScheduledDateTime: DateTime
+}
+
+type DatedMarketingSegmentType {
+  carrierDesigCode: String
+  MarketingCarrierFlightNumberText: String
+}
+
+type FlightPax {
+  age: Int!
+  ptc: IATA_PTC_CodeType
+  paxID: ID!
+}
+
+type CarrierOffers {
+  carrier: String
+  offers: [Offer] 
+}
+
+type Offer {
+  offerID: ID
+  totalPrice:Int
+	offerItems: [OfferItem]
+}
+
+type OfferItem {
+  offerItemID:ID
+  priceHotel: Price
+  priceFlight: PriceX
+  services: [Service]
+}
+type PriceX {
+	baseAmount: AmountType
+  fee: [Fee]
+  surcharge: [SurchargeX]
+  taxSummary: [TaxSummaryType]
+  totalAmount: AmountType
+}
+type SurchargeX {
+  totalAmount: AmountType
+  breakdown: [Fee]
+}
+type TaxSummaryType {
+  totalTaxAmount: AmountType
+  tax: [TaxType]
+}
+type TaxType {
+  amount: AmountType
+  descText: TextType
+}
+type Fee {
+  amount:AmountType
+  descText:TextType
+}
+type TextType{
+  text: String
+}
+type AmountType {
+  amount: Float
+  curCode: String
+}
+
+type Service {
+  serviceID: ID
+  paxRefID: ID
+  serviceAssociations: ServiceAssociations
+}
+
+type ServiceAssociations {
+  paxJourneyRefID: [ID]
+}
+
+type Individual implements Node{
+  code:ID!
+  individualData:[IndividualData]
+	createdAt: DateTime!
+	updatedAt: DateTime!
+  adviseMessage:[AdviseMessage]
+  
+}
+type IndividualData{
+  code:ID!
+  name:ProperNameType
+  surname:ProperNameType!
+  birthDate:DateType
+  title: TitleNameType
+}
+# ISO3009 
+scalar ProperNameType
+# PADIS NDC 19.1
+#  MR
+#  MRS
+#  MISS
+#  DR
+scalar TitleNameType
+
+#3-letters IATA location code
+scalar LocationCode 
+
+#2-letters IATA airline code
+scalar AirlineCode 
+
+
+
+enum IATA_PTC_CodeType {
+  ADT
+  CHD
+  INF
+}
+
+
+
 
